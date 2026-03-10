@@ -422,7 +422,12 @@ TEST_F(SchedulerTest, Schedule_OneProducerTwoConsumers) {
 TEST_F(SchedulerTest, Schedule_HighLatencyChain) {
     // lw (5) -> add (1) -> add (1).
     // Priorities: Node 2=1, Node 1=1+1=2, Node 0=5+2=7
-    // Order: 0, 1, 2. total_cycles = 3.
+    // Order: 0, 1, 2.
+    // With inflight tracking, RAW successors wait for actual completion:
+    //   Cycle 0: issue node 0 (lw, finish=5)
+    //   Cycle 5: node 0 finishes, issue node 1 (add, finish=6)
+    //   Cycle 6: node 1 finishes, issue node 2 (add, finish=7)
+    //   total_cycles = 7
     std::vector<Instruction> insts = {
         makeInst(0, "lw", "x1", {"x2"}, 5),
         makeInst(1, "add", "x4", {"x1", "x5"}, 1),
@@ -436,7 +441,7 @@ TEST_F(SchedulerTest, Schedule_HighLatencyChain) {
     EXPECT_EQ(result.order[0], 0);
     EXPECT_EQ(result.order[1], 1);
     EXPECT_EQ(result.order[2], 2);
-    EXPECT_EQ(result.total_cycles, 3);
+    EXPECT_EQ(result.total_cycles, 7);
 }
 
 // ---------------------------------------------------------------------------
