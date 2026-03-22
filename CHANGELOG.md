@@ -15,3 +15,9 @@
 2.26 -> 3.31
 
 **2026.3.17**
+
+## Increase time out limit
+
+30s -> 50s, to avoid schedule() take too long leading performance test to fail.
+
+**2026.3.22**

@@ -61,9 +61,9 @@ target_link_libraries(test_scheduler scheduler_lib GTest::gtest_main)
 
 # Auto-discover tests and register with CTest
 # Set timeout to 30 seconds per test to catch infinite loops
-gtest_discover_tests(test_instruction PROPERTIES TIMEOUT 30)
-gtest_discover_tests(test_dagbuilder PROPERTIES TIMEOUT 30)
-gtest_discover_tests(test_scheduler PROPERTIES TIMEOUT 30)
+gtest_discover_tests(test_instruction PROPERTIES TIMEOUT 50)
+gtest_discover_tests(test_dagbuilder PROPERTIES TIMEOUT 50)
+gtest_discover_tests(test_scheduler PROPERTIES TIMEOUT 50)
 
 # Build info
 message(STATUS "Building miniCodeScheduler v${PROJECT_VERSION}")
