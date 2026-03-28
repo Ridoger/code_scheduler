@@ -17,16 +17,19 @@ bool Instruction::hasDestReg() const {
 
 bool Instruction::usesReg(const std::string& reg) const {
     // Check if reg is in source register list
-    // TODO: Implement this function
-    throw std::runtime_error("usesReg not implemented");
+    for (const auto& src : src_regs) {
+        if (src == reg) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Instruction::definesReg(const std::string& reg) const {
     // Check if instruction defines the specified register
     // Here "define" simply means "write to" the register
     // For example, "add x1, x2, x3" defines x1
-    // TODO: Implement this function
-    throw std::runtime_error("definesReg not implemented");
+    return dest_reg == reg;
 }
 
 void Instruction::print(std::ostream& os) const {
