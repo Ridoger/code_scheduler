@@ -36,9 +36,9 @@ struct DependencyEdge {
 };
 
 struct DAGNode {
+    
     int inst_index;
     std::vector<DependencyEdge> successors;
-
     std::vector<DependencyEdge> predecessors;
 
     int unscheduled_predecessors;
