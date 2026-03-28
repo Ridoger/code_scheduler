@@ -88,6 +88,7 @@ int getInstructionLatency(const std::string& opcode) {
         { "auipc",  1},
 
         // Multiplication instructions - 3 cycles
+        {   "mul",  3},
         {  "mulh",  3},
         {"mulhsu",  3},
         { "mulhu",  3},
@@ -98,6 +99,7 @@ int getInstructionLatency(const std::string& opcode) {
         {  "divu", 10},
         {  "divw", 10},
         { "divuw", 10},
+        {   "rem", 10},
         {  "remu", 10},
         {  "remw", 10},
         { "remuw", 10},
@@ -107,6 +109,7 @@ int getInstructionLatency(const std::string& opcode) {
         {   "lbu",  5},
         {    "lh",  5},
         {   "lhu",  5},
+        {    "lw",  5},
         {   "lwu",  5},
         {    "ld",  5},
 

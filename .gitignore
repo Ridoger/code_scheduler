@@ -45,3 +45,5 @@ build/
 
 # pycache
 __pycache__/
+
+Testing/Temporary
