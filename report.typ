@@ -27,13 +27,13 @@
 
 `DAGBuilder::build()` is implemented as a solitary function.
 
-= Problem 2
+= Static Latency Model
 
 (a) Both load and store instructions use multiple cycles, but at most of time there's no need to wait for store to finish. We can run the next instrucion immediately, even the store is still in progress. 
 
 (b) A static latency model may be not precise, but it is better than having no model at all. It can help us optimize the code at least in some extent.
 
-= Problem 3
+= Dependency Detection
 
 (a) As long as the value of a register is not changed, then the order of different instructions that read the register does not matter. Regardless of the order, they will read the same value.
 
@@ -41,10 +41,26 @@
 
 The graph should be acyclic, otherwise every instruction in the cycle will have an unstarted instruction as its dependency, and all instrucions in the cycle cannot ever start.
 
-= Problem 4
+= Priority Calculation 
 
 (a) The latter instruction doesn't need the result of the former one.
 
 #link("https://chatgpt.com/share/69c8d1f7-a2b4-8325-8010-28d1eec856a0")[ChatGPT conversation about WAW hazard]
 
 (c) #link("https://chatgpt.com/share/69c92e93-64c0-8326-89f1-f886789b693b")[ChatGPT conversation about deleting elements in a vector]
+
+= Tie-Breaking Policies
+
+(a) MOST_CHILD makes more instructions get ready when meets a tie, which provides more opportunities for parallelism.
+
+For instance: ```assemly
+            mul    t0, a0, a1       # A, CPL = 10 + 3 = 13
+            mul    t1, a1, a2       # B, CPL = 10 + 3 = 13
+            div    t2, t1, x1       # C, depends only on B, CPL = 10
+            div    t3, t0, t1       # D, depends on A and B, CPL = 10
+```
+
+Obey MOST_CHILD, the schedule result will be BACD, cost 14 cycles in total.
+Otherwise, the schedule result will be ABCD, cost 15 cycles in total.
+
+(b) When there are multiple parallel chain of instructions where some have long chain of low latency instructions and some have short chain of high latency instructions, then LPT will be a better choice.

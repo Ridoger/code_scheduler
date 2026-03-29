@@ -153,6 +153,12 @@ int Scheduler::selectBestNode(const std::vector<int>& readyNodes,
                     // Select node with smaller original index
                     shouldReplace = (nodeIdx < bestNode);
                     break;
+                case TieBreakingPolicy::MOST_CHILD:
+                    shouldReplace = (nodes[nodeIdx].successors.size() > nodes[bestNode].successors.size());
+                    break;
+                case TieBreakingPolicy::LPT:
+                    shouldReplace = (instructions[nodeIdx].latency > instructions[bestNode].latency);
+                    break;
             }
 
             if (shouldReplace) {
