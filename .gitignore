@@ -47,3 +47,4 @@ build/
 __pycache__/
 
 Testing/Temporary
+.vscode/settings.json

@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <queue>
 
 ScheduleResult Scheduler::schedule(
@@ -62,10 +63,92 @@ ScheduleResult Scheduler::scheduleFast(const std::vector<Instruction>& instructi
                                        std::vector<DAGNode>& nodes,
                                        TieBreakingPolicy policy,
                                        bool verbose) {
+
     ScheduleResult result;
-    // TODO: BONUS: Optimize code as fast as you can
-    throw std::runtime_error("scheduleFast not implemented");
+    computePriorities(instructions, nodes);
+
+    struct cmp {
+
+        const std::vector<Instruction>& instructions;
+        TieBreakingPolicy policy;
+        cmp(const std::vector<Instruction>& insts, TieBreakingPolicy p = TieBreakingPolicy::SMALLER_INDEX) : 
+            instructions(insts), policy(p) {}
+        
+        bool operator()(const DAGNode* l, const DAGNode* r) {
+
+            if (l->priority != r->priority) {
+                return l->priority < r->priority;
+            }
+            
+            switch (policy) {
+                case TieBreakingPolicy::MOST_CHILD:
+                    if (l->successors.size() != r->successors.size()) {
+                        return l->successors.size() < r->successors.size();
+                    } else {
+                        return l->inst_index > r->inst_index;
+                    }
+                case TieBreakingPolicy::LPT:
+                    if (instructions[l->inst_index].latency != instructions[r->inst_index].latency) {
+                        return instructions[l->inst_index].latency < instructions[r->inst_index].latency;
+                    } else {
+                        return l->inst_index > r->inst_index;
+                    }
+                case TieBreakingPolicy::SMALLER_INDEX:
+                default:
+                    return l->inst_index > r->inst_index;
+            }
+        }
+
+    };
+
+    cmp comparator(instructions, policy);
+    std::priority_queue<DAGNode*, std::vector<DAGNode*>, cmp> readyNodes(comparator);
+    for (int idx : getReadyNodes(nodes)) {
+        readyNodes.push(&nodes[idx]);
+    }
+    std::map<int, std::vector<int>> inflight;
+
+    int count_scheduled = instructions.size();
+    while (count_scheduled) {
+
+        if (!readyNodes.empty()) {
+
+            count_scheduled--;
+            DAGNode* top = readyNodes.top();
+            readyNodes.pop();
+            int best_node = top->inst_index;
+
+            result.order.push_back(best_node);
+            top->scheduled = true;
+            top->schedule_cycle = result.total_cycles;
+
+            for (const auto& edge : top->successors) {
+                if (!(edge.type == DependencyType::RAW)) {
+                    nodes[edge.target_node].unscheduled_predecessors--;
+                    if (nodes[edge.target_node].unscheduled_predecessors == 0) {
+                        readyNodes.push(&nodes[edge.target_node]);
+                    }
+                } else {
+                    inflight[instructions[best_node].latency + result.total_cycles].push_back(edge.target_node);
+                }
+            }
+        }
+
+        ++result.total_cycles;
+        if (inflight.count(result.total_cycles)) {
+            for (const auto& target_node : inflight[result.total_cycles]) {
+                --nodes[target_node].unscheduled_predecessors;
+                if (nodes[target_node].unscheduled_predecessors == 0) {
+                    readyNodes.push(&nodes[target_node]);
+                }
+            }
+            inflight.erase(result.total_cycles);
+        }
+
+    }
+
     return result;
+
 }
 
 void Scheduler::computePriorities(const std::vector<Instruction>& instructions,
@@ -152,13 +235,17 @@ int Scheduler::selectBestNode(const std::vector<int>& readyNodes,
                 case TieBreakingPolicy::MOST_CHILD:
                     if (nodes[nodeIdx].successors.size() != nodes[bestNode].successors.size()) {
                         shouldReplace = (nodes[nodeIdx].successors.size() > nodes[bestNode].successors.size());
-                        break;
+                    } else {
+                        shouldReplace = (nodeIdx < bestNode);
                     }
+                    break;
                 case TieBreakingPolicy::LPT:
                     if (instructions[nodeIdx].latency != instructions[bestNode].latency) {
                         shouldReplace = (instructions[nodeIdx].latency > instructions[bestNode].latency);
-                        break;
+                    } else {
+                        shouldReplace = (nodeIdx < bestNode);
                     }
+                    break;
                 case TieBreakingPolicy::SMALLER_INDEX:
                     // Select node with smaller original index
                     shouldReplace = (nodeIdx < bestNode);

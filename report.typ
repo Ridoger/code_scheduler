@@ -64,3 +64,15 @@ Obey MOST_CHILD, the schedule result will be BACD, cost 14 cycles in total.
 Otherwise, the schedule result will be ABCD, cost 15 cycles in total.
 
 (b) When there are multiple parallel chain of instructions where some have long chain of low latency instructions and some have short chain of high latency instructions, then LPT will be a better choice.
+
+= Complexity Analysis
+
+(a) We ignore the time cost of `selectBestNode()` since ready set is much smaller than the universal set which is going to be traversed each time `Scheduler::getReadyNodes()` is called.
+
+There will be $O(n)$ cycles, in each cycle we call `getReadyNodes()` which is $O(n)$. This results in time complexity is $O(n^2)$.
+
+Besides, in each cycle we visit the best node's successors to update their dependency counts. Throughout the process every edge is visited for once, which results in time complexity $O(e)$.
+
+Hence, the overall time complexity is $O(n^2 + e)$.
+
+(b) $O(n+e)$. Since we use memorized algorithm, priority for each node is computed exactly once, then every time we visit the same node, the priority will be reused. Also, each edge is visited exactly once.
