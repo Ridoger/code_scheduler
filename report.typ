@@ -25,7 +25,7 @@
 
 = Bonus 
 
-`DAGBuilder::build()` is implemented as a solitary function.
+All bonus problems are solved.
 
 = Static Latency Model
 
