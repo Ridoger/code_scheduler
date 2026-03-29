@@ -21,13 +21,22 @@ std::vector<DAGNode> DAGBuilder::build(const std::vector<Instruction>& instructi
         nodes[i].inst_index = i;
 
         auto& inst = instructions[i];
+
         // detect RAW
+        std::set<std::string> unique_srcs;
         for (const auto& src : inst.src_regs) {
+
+            if (unique_srcs.find(src) != unique_srcs.end()) {
+                continue;  // Skip duplicate sources
+            }
+            unique_srcs.insert(src);
+
             auto it = writer.find(src);
             if (it != writer.end()) {
                 addEdge(nodes, it->second, i, DependencyType::RAW, src);
             }
             readers[src].push_back(i);
+            
         }
 
         // detect WAR & WAW
@@ -60,15 +69,11 @@ std::vector<DAGNode> DAGBuilder::build(const std::vector<Instruction>& instructi
 
 void DAGBuilder::addEdge(
     std::vector<DAGNode>& nodes, int from, int to, DependencyType type, const std::string& reg) {
-    for (const auto& edge : nodes[from].successors) {
-        if (edge.target_node == to && edge.type == type && edge.reg == reg) {
-            return;  // Edge already exists
-        }
-    }
+    // By the construction, no duplicate edges will be generated,
+    // hence we skip the check for performance.
 
     // from -> to
     nodes[from].successors.emplace_back(to, type, reg);
-
     // to <- from
     nodes[to].predecessors.emplace_back(from, type, reg);
 }
