@@ -49,9 +49,6 @@ void Instruction::print(std::ostream& os) const {
 // This function returns the execution latency for a given opcode.
 // We use a simplified static latency model here.
 int getInstructionLatency(const std::string& opcode) {
-    // TODO: there are some bugs in the current implementation, can you fix the bugs and pass the
-    // tests?
-
     // Latency lookup table
     // Unknown instruction default latency is 1
     static const std::unordered_map<std::string, int> latencyTable = {

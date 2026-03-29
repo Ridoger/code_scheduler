@@ -217,7 +217,6 @@ int Scheduler::selectBestNode(const std::vector<int>& readyNodes,
                               TieBreakingPolicy policy) {
     // Select node with highest priority
     // If priorities are equal, use tie-breaking policy
-    // TODO: Implement Other Tie Condition
     int bestNode = readyNodes[0];
     int bestPriority = nodes[bestNode].priority;
 

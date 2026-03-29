@@ -94,7 +94,6 @@ void printWelcome() {
 }
 
 void runScheduler(const std::string& name, const std::vector<std::string>& code) {
-    // TODO: Put All things together
     std::cout << "\n";
     std::cout << name << "\n";
 
