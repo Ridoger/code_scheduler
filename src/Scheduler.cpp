@@ -6,13 +6,56 @@
 #include <limits>
 #include <queue>
 
-ScheduleResult Scheduler::schedule(const std::vector<Instruction>& instructions,
-                                   std::vector<DAGNode>& nodes,
-                                   TieBreakingPolicy policy) {
-    // TODO: Implement this function using provided API
+ScheduleResult Scheduler::schedule(
+    const std::vector<Instruction>& instructions,
+    std::vector<DAGNode>& nodes,
+    TieBreakingPolicy policy
+) {
+
     ScheduleResult result;
-    throw std::runtime_error("schedule not implemented");
+    std::vector<int> readyNodes;
+    std::vector<std::pair<int, int>> inflight;
+
+    computePriorities(instructions, nodes);
+
+    int count_scheduled = instructions.size();
+    while (count_scheduled) {
+
+        readyNodes = getReadyNodes(nodes);
+        if (!readyNodes.empty()) {
+            count_scheduled--;
+            int best_node = selectBestNode(readyNodes, nodes, instructions, policy);
+            result.order.push_back(best_node);
+            nodes[best_node].scheduled = true;
+            nodes[best_node].schedule_cycle = result.total_cycles;
+            inflight.push_back({best_node, instructions[best_node].latency + result.total_cycles});
+            for (const auto& edge : nodes[best_node].successors) {
+                if (edge.type == DependencyType::WAR || edge.type == DependencyType::WAW) {
+                    nodes[edge.target_node].unscheduled_predecessors--;
+                }
+            }
+        }
+
+        ++result.total_cycles;
+        std::vector<std::pair<int, int>> to_remove;
+        for (const auto& flight : inflight) {
+            if (flight.second == result.total_cycles) {
+                to_remove.push_back(flight);
+                for (const auto& edge : nodes[flight.first].successors) {
+                    if (edge.type == DependencyType::RAW) {
+                        nodes[edge.target_node].unscheduled_predecessors--;
+                    }
+                }
+            }
+        }
+        for (const auto& flight : to_remove) {
+            inflight.erase(std::remove(inflight.begin(), inflight.end(), flight), inflight.end());
+        }
+
+    }
+
     return result;
+
 }
 
 ScheduleResult Scheduler::scheduleFast(const std::vector<Instruction>& instructions,
@@ -37,13 +80,37 @@ void Scheduler::computePriorities(const std::vector<Instruction>& instructions,
     }
 }
 
-int Scheduler::computeCriticalPath(int nodeIdx,
-                                   const std::vector<Instruction>& instructions,
-                                   std::vector<DAGNode>& nodes,
-                                   std::vector<bool>& visited) {
-    // TODO: Implement this function
-    throw std::runtime_error("computeCriticalPath not implemented");
-    return 0;
+int Scheduler::computeCriticalPath(
+    int nodeIdx,
+    const std::vector<Instruction>& instructions,
+    std::vector<DAGNode>& nodes,
+    std::vector<bool>& visited
+) {
+    // Cut branch
+    if (visited[nodeIdx]) {
+        return nodes[nodeIdx].priority;
+    }
+    visited[nodeIdx] = true;
+
+    // Leaf node
+    if (nodes[nodeIdx].successors.empty()) {
+        return nodes[nodeIdx].priority = instructions[nodeIdx].latency;
+    }
+
+    // Find the max successor priority
+    int max_priority_RAW = 0;
+    int max_priority_WARW = 0;
+    for (const auto& suc: nodes[nodeIdx].successors) {
+        int suc_priority = computeCriticalPath(suc.target_node, instructions, nodes, visited);
+        if (suc.type == DependencyType::RAW) {
+            max_priority_RAW = std::max(max_priority_RAW, suc_priority);
+        } else {
+            max_priority_WARW = std::max(max_priority_WARW, suc_priority);
+        }
+    }
+    return nodes[nodeIdx].priority = max_priority_RAW ? 
+        std::max(instructions[nodeIdx].latency + max_priority_RAW, max_priority_WARW) :
+        max_priority_WARW;
 }
 
 std::vector<int> Scheduler::getReadyNodes(const std::vector<DAGNode>& nodes) {
@@ -95,13 +162,6 @@ int Scheduler::selectBestNode(const std::vector<int>& readyNodes,
     }
 
     return bestNode;
-}
-
-void Scheduler::updateSuccessors(int nodeIdx, std::vector<DAGNode>& nodes) {
-    for (const auto& edge : nodes[nodeIdx].successors) {
-        int succIdx = edge.target_node;
-        nodes[succIdx].unscheduled_predecessors--;
-    }
 }
 
 void Scheduler::printSchedule(const ScheduleResult& result,
