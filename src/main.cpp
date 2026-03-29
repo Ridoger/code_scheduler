@@ -98,7 +98,18 @@ void runScheduler(const std::string& name, const std::vector<std::string>& code)
     std::cout << "\n";
     std::cout << name << "\n";
 
-    std::cout << "TODO: runScheduler not implemented\n";
+    Parser parser;
+    auto instructions = parser.parse(code);
+
+    DAGBuilder builder;
+    auto dag = builder.build(instructions);
+
+    Scheduler scheduler;
+    ScheduleResult result = scheduler.scheduleFast(instructions, dag, TieBreakingPolicy::SMALLER_INDEX);
+
+    scheduler.printSchedule(result, instructions, dag);
+    scheduler.printComparison(instructions, dag, result);
+
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
