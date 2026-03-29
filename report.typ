@@ -76,3 +76,15 @@ Besides, in each cycle we visit the best node's successors to update their depen
 Hence, the overall time complexity is $O(n^2 + e)$.
 
 (b) $O(n+e)$. Since we use memorized algorithm, priority for each node is computed exactly once, then every time we visit the same node, the priority will be reused. Also, each edge is visited exactly once.
+
+= Results
+
+- *Example 1 & 2*: No improvement. There's no more space to improve.
+
+- *Example 3*: 17→14 cycles. Scheduler interleaves loads to hide memory latency.
+
+- *Example 4*: 21→16 cycles. Moving high-latency division earlier for parallelism.
+
+Scheduling helps when code contains independent chains and long-latency operations that can be rearranged. It cannot improve code that is already optimal or constrained by strict dependencies.
+
+
